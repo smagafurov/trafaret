@@ -18,7 +18,7 @@ from .dataerror import DataError
 
 
 if py36:
-    from .async import (
+    from .async_mixins import (
         TrafaretAsyncMixin,
         OrAsyncMixin,
         AndAsyncMixin,
@@ -130,12 +130,6 @@ class Trafaret(TrafaretAsyncMixin):
         Shortcut method for raising validation error
         """
         raise DataError(error=error, value=value, trafaret=self)
-
-    def append(self, other):
-        """
-        Appends new converter to list.
-        """
-        return And(self, other)
 
     def __or__(self, other):
         return Or(self, other)
@@ -615,16 +609,22 @@ class String(Trafaret):
 
 
 class Bytes(Trafaret):
+    """ Get bytes and try to decode it with given encoding, utf-8 by default.
+    It can be used like ``unicode_or_koi8r = String | Bytes(encoding='koi8r')``
+    """
     def __init__(self, encoding='utf-8'):
         self.encoding = encoding
 
     def check_and_return(self, value):
         if not isinstance(value, BYTES_TYPE):
-            self._failure('Value is not bytes', value=value)
+            self._failure('value is not a bytes', value=value)
         try:
             return value.decode(self.encoding)
         except UnicodeError:
             raise self._failure('value cannot be decoded with %s encoding' % self.encoding)
+
+    def __repr__(self):
+        return "<Bytes>"
 
 
 class SquareBracketsMeta(TrafaretMeta):
